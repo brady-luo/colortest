@@ -31,6 +31,7 @@ string str_fy;
 string str_Lv;
 string str_CCT;
 ofstream outUserTestFile;
+int steptime;
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -80,6 +81,7 @@ void CRJColorTestDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_OpenCA, m_isOpencaOK);
 	DDX_Control(pDX, IDC_LIST_TestResult, m_isTestOver);
 	DDX_Control(pDX, IDC_PICTURE, m_picture);
+	DDX_Control(pDX, IDC_COMBO_steptime, vCombo_steptime);
 }
 
 BEGIN_MESSAGE_MAP(CRJColorTestDlg, CDialog)
@@ -98,6 +100,7 @@ BEGIN_MESSAGE_MAP(CRJColorTestDlg, CDialog)
 	ON_BN_CLICKED(IDC_BTN_UserTest, &CRJColorTestDlg::OnBnClickedBtnUsertest)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_LIST_TestResult, &CRJColorTestDlg::OnNMCustomdrawListTestresult)
 	ON_BN_CLICKED(IDC_CHECK_IsSaveData, &CRJColorTestDlg::OnBnClickedCheckIssavedata)
+	ON_CBN_SELCHANGE(IDC_COMBO_steptime, &CRJColorTestDlg::OnCbnSelchangeCombosteptime)
 END_MESSAGE_MAP()
 
 
@@ -149,7 +152,7 @@ BOOL CRJColorTestDlg::OnInitDialog()
 	//m_pictureName.SetWindowText(_T("请填写画面名称"));
 	SetDlgItemText(IDC_EDIT_PictureName, _T("请填写画面名称"));
 
-	//ChannelNO设置初始值
+	//ChannelNO设置初始值，默认为0 (Konica Minolta calibration)
 	SetDlgItemText(IDC_ChannelNO, _T("0"));
 
 	//初始化控件不可用
@@ -163,6 +166,12 @@ BOOL CRJColorTestDlg::OnInitDialog()
 	::EnableWindow(hBtn, FALSE);
 	hBtn = ::GetDlgItem(m_hWnd, IDC_BTN_UserTest);
 	::EnableWindow(hBtn, FALSE);
+
+	//初始化时间步长
+	vCombo_steptime.SetCurSel(3);
+	CString curStr_steptime;
+	vCombo_steptime.GetLBText(3, curStr_steptime);
+	steptime = _ttoi(curStr_steptime);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -284,9 +293,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 		PDLG->backBrush.DeleteObject();
 		PDLG->backBrush.CreateSolidBrush((RGB(i, i, i)));
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		Sleep(200);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(300);
 		str_Gray = to_string(i);
 		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 		if (i == 0) {
@@ -304,9 +311,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 		PDLG->backBrush.DeleteObject();
 		PDLG->backBrush.CreateSolidBrush((RGB(0, 0, i)));
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		Sleep(200);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(300);
 		str_Gray = to_string(i);
 		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 		if (i == 0) {
@@ -324,9 +329,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 		PDLG->backBrush.DeleteObject();
 		PDLG->backBrush.CreateSolidBrush((RGB(0, i, 0)));
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		Sleep(200);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(300);
 		str_Gray = to_string(i);
 		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 		if (i == 0) {
@@ -344,9 +347,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 		PDLG->backBrush.DeleteObject();
 		PDLG->backBrush.CreateSolidBrush((RGB(i, 0, 0)));
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		Sleep(200);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(300);
 		str_Gray = to_string(i);
 		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 		if (i == 0) {
@@ -402,9 +403,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 0)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "R";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -413,9 +412,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 0)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "G";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -424,9 +421,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 255)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "B";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -435,9 +430,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 255)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "C";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -446,9 +439,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 255)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "M";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -457,9 +448,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 0)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "Y";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -477,9 +466,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 		cstr_pictureName = CString(str_pictureName.c_str());
 		//显示图片
 		pWnd->SetBitmap((HBITMAP)::LoadImage(NULL, cstr_pictureName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE));
-		Sleep(500);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(500);
 		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 	}
 
@@ -521,9 +508,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Contrast(LPVOID lpParam)
 	CRect prect;
 	PDLG->m_picture.GetClientRect(&prect);
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "White";
 	outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -531,9 +516,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Contrast(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 0)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "Black";
 	outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -593,9 +576,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 		PDLG->backBrush.DeleteObject();
 		PDLG->backBrush.CreateSolidBrush((RGB(i, i, i)));
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		Sleep(200);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(300);
 		str_Gray = to_string(i);
 		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 		if (i == 0) {
@@ -613,9 +594,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 		PDLG->backBrush.DeleteObject();
 		PDLG->backBrush.CreateSolidBrush((RGB(0, 0, i)));
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		Sleep(200);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(300);
 		str_Gray = to_string(i);
 		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 		if (i == 0) {
@@ -633,9 +612,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 		PDLG->backBrush.DeleteObject();
 		PDLG->backBrush.CreateSolidBrush((RGB(0, i, 0)));
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		Sleep(200);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(300);
 		str_Gray = to_string(i);
 		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 		if (i == 0) {
@@ -653,9 +630,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 		PDLG->backBrush.DeleteObject();
 		PDLG->backBrush.CreateSolidBrush((RGB(i, 0, 0)));
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		Sleep(200);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(300);
 		str_Gray = to_string(i);
 		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 		if (i == 0) {
@@ -699,9 +674,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 0)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "R";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -710,9 +683,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 0)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "G";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -721,9 +692,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 255)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "B";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -732,9 +701,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 255)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "C";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -743,9 +710,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 255)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "M";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -754,9 +719,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 0)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "Y";
 	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -774,9 +737,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 		cstr_pictureName = CString(str_pictureName.c_str());
 		//显示图片
 		pWnd->SetBitmap((HBITMAP)::LoadImage(NULL, cstr_pictureName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE));
-		Sleep(500);
 		PDLG->CA_Measure_SxSyLv();
-		Sleep(500);
 		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 	}
 
@@ -809,9 +770,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 
 
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "White";
 	outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -819,9 +778,7 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 	PDLG->backBrush.DeleteObject();
 	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 0)));
 	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	Sleep(500);
 	PDLG->CA_Measure_SxSyLv();
-	Sleep(500);
 	str_Gray = "Black";
 	outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
@@ -829,7 +786,6 @@ DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 	//显示完成状态
 	PDLG->m_isTestOver.SetItemText(0, 0, _T("ContrastTest完成"));
 	PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底
-
 
 
 	Sleep(1000);
@@ -859,10 +815,8 @@ void CRJColorTestDlg::OnBnClickedBtnUsertest()
 {
 	CString CStr_pictureName;
 	GetDlgItem(IDC_EDIT_PictureName)->GetWindowText(CStr_pictureName);
-	str_Gray = CStringA(CStr_pictureName);
-	Sleep(200);
+	str_Gray = CStringA(CStr_pictureName);	
 	CA_Measure_SxSyLv();
-	Sleep(300);
 
 	if (((CButton*)GetDlgItem(IDC_CHECK_IsSaveData))->GetCheck())
 	{
@@ -940,7 +894,7 @@ void CRJColorTestDlg::OnBnClickedBtnConnectca()
 	m_pCaObj->DisplayMode = DSP_LXY;     //设置显示模式
 	m_pCaObj->DisplayDigits = DIGT_4;    //设置显示数字的数目为4
 
-	//Set memory channel to 0 (Konica Minolta calibration)
+	//Set memory channel
 	CString CStr_ChannelNO;
 	GetDlgItem(IDC_ChannelNO)->GetWindowText(CStr_ChannelNO);
 	m_pMemoryObj->ChannelNO = _ttol(CStr_ChannelNO);
@@ -1067,14 +1021,13 @@ void CRJColorTestDlg::OnNMCustomdrawListTestresult(NMHDR* pNMHDR, LRESULT* pResu
 
 void CRJColorTestDlg::CA_Measure_SxSyLv()
 {
+	Sleep(steptime);
 	// CA-SDK  测量
-
 	float fLv;
 	float fx;
 	float fy;
 	long lT;
 	//float fduv;
-
 	for (int i = 0; i < 4; i++) {
 		m_pCaObj->Measure(0);
 		fLv = m_pProbeObj->Lv;
@@ -1099,9 +1052,17 @@ void CRJColorTestDlg::CA_Measure_SxSyLv()
 		str_CCT = CStringA(m_CCT);		
 		//UpdateData(FALSE);
 	}
-
 }
 
+
+void CRJColorTestDlg::OnCbnSelchangeCombosteptime()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	int curSel_steptime = vCombo_steptime.GetCurSel();
+	CString curStr_steptime;
+	vCombo_steptime.GetLBText(curSel_steptime, curStr_steptime);
+	steptime = _ttoi(curStr_steptime);
+}
 
 void CRJColorTestDlg::OnBnClickedOk()
 {
@@ -1145,5 +1106,4 @@ BOOL CRJColorTestDlg::PreTranslateMessage(MSG* pMsg)
 	}
 	return CDialog::PreTranslateMessage(pMsg);
 }
-
 

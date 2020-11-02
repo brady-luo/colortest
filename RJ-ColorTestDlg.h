@@ -77,6 +77,8 @@ public:
 	static DWORD __stdcall ThreadFunc_Color(LPVOID lpParam);
 	static DWORD __stdcall ThreadFunc_Contrast(LPVOID lpParam);
 	static DWORD __stdcall ThreadFunc_AllTest(LPVOID lpParam);
+	CComboBox vCombo_steptime;
+	afx_msg void OnCbnSelchangeCombosteptime();
 };
 
 
