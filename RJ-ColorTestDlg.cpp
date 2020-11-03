@@ -25,13 +25,12 @@
 
 using namespace std;
 
-string str_Gray;
-string str_fx;
-string str_fy;
-string str_Lv;
-string str_CCT;
+//全局变量
+string str_Gray, str_fx, str_fy, str_Lv, str_CCT;
 ofstream outUserTestFile;
 int steptime;
+HANDLE g_hWaitContrast, g_hWaitColor, g_hWaitGamma;
+
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -230,24 +229,6 @@ HCURSOR CRJColorTestDlg::OnQueryDragIcon()
 void CRJColorTestDlg::OnBnClickedBtnFindcenter()
 {
 	//在对话框上打定位画面
-	//Sleep(500);
-	//RECT rect;
-	////rect.left = 495;
-	////rect.top = 299;
-	////rect.right = 555;
-	////rect.bottom = 359;
-	////CRect rect2;
-	////GetClientRect(&rect2);
-
-	//rect.left = 542;
-	//rect.top = 318;
-	//rect.right = 602;
-	//rect.bottom = 378;
-
-	//backBrush.DeleteObject();
-	//backBrush.CreateSolidBrush((RGB(0, 155, 0)));
-	//CDC* pDC = GetWindowDC();
-	//pDC->FillRect(&rect, &backBrush);
 
 	//获取对话框上图片控件的句柄
 	CStatic* pWnd = (CStatic*)GetDlgItem(IDC_PICTURE);
@@ -265,550 +246,313 @@ void CRJColorTestDlg::OnBnClickedBtnFindcenter()
 
 DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 {
-	CRJColorTestDlg* PDLG = (CRJColorTestDlg*)lpParam;
-	//显示正在状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("GammaTest进行中..."));
-	PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
-	//设置对话框为顶层窗口
-	PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-	//获取系统时间，作为文件名称	
-	time_t timer;
-	time(&timer);
-	string filename = "TestResult\\GammaTest" + to_string(timer) + ".csv";
-	//打开文件
-	ofstream outGammaFile;
-	outGammaFile.open(filename, ios::out);
-	outGammaFile << "Gray" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
+	DWORD dWait = WaitForSingleObject(g_hWaitGamma, INFINITE);//无限等待
 
-	//在对话框上打测试画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 0)));
-	CRect prect;
-	PDLG->m_picture.GetClientRect(&prect);
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-
-	for (int i = 0; i < 256; )
-	{		
-		//更改测试W画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(i, i, i)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = to_string(i);
-		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-		if (i == 0) {
-			i += 3;
-		}
-		else {
-			i += 4;
-		}
-	}
-
-
-	for (int i = 0; i < 256; )
+	if (WAIT_OBJECT_0 == dWait)
 	{
-		//更改测试B画面
+		CRJColorTestDlg* PDLG = (CRJColorTestDlg*)lpParam;
+		//显示正在状态
+		PDLG->m_isTestOver.SetItemText(0, 0, _T("GammaTest进行中..."));
+		PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
+		//设置对话框为顶层窗口
+		PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+		//获取系统时间，作为文件名称	
+		time_t timer;
+		time(&timer);
+		string filename = "TestResult\\GammaTest" + to_string(timer) + ".csv";
+		//打开文件
+		ofstream outGammaFile;
+		outGammaFile.open(filename, ios::out);
+		outGammaFile << "Gray" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
+
+		//在对话框上打测试画面
 		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(0, 0, i)));
+		PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 0)));
+		CRect prect;
+		PDLG->m_picture.GetClientRect(&prect);
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = to_string(i);
-		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-		if (i == 0) {
-			i += 3;
+
+		for (int i = 0; i < 256; )
+		{
+			//更改测试W画面
+			PDLG->backBrush.DeleteObject();
+			PDLG->backBrush.CreateSolidBrush((RGB(i, i, i)));
+			FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+			PDLG->CA_Measure_SxSyLv();
+			str_Gray = to_string(i);
+			outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+			if (i == 0) {
+				i += 3;
+			}
+			else {
+				i += 4;
+			}
 		}
-		else {
-			i += 4;
+
+
+		for (int i = 0; i < 256; )
+		{
+			//更改测试B画面
+			PDLG->backBrush.DeleteObject();
+			PDLG->backBrush.CreateSolidBrush((RGB(0, 0, i)));
+			FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+			PDLG->CA_Measure_SxSyLv();
+			str_Gray = to_string(i);
+			outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+			if (i == 0) {
+				i += 3;
+			}
+			else {
+				i += 4;
+			}
 		}
+
+
+		for (int i = 0; i < 256; )
+		{
+			//更改测试G画面
+			PDLG->backBrush.DeleteObject();
+			PDLG->backBrush.CreateSolidBrush((RGB(0, i, 0)));
+			FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+			PDLG->CA_Measure_SxSyLv();
+			str_Gray = to_string(i);
+			outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+			if (i == 0) {
+				i += 3;
+			}
+			else {
+				i += 4;
+			}
+		}
+
+
+		for (int i = 0; i < 256; )
+		{
+			//更改测试R画面
+			PDLG->backBrush.DeleteObject();
+			PDLG->backBrush.CreateSolidBrush((RGB(i, 0, 0)));
+			FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+			PDLG->CA_Measure_SxSyLv();
+			str_Gray = to_string(i);
+			outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+			if (i == 0) {
+				i += 3;
+			}
+			else {
+				i += 4;
+			}
+		}
+
+		outGammaFile.close();
+		//显示完成状态
+		PDLG->m_isTestOver.SetItemText(0, 0, _T("GammaTest完成"));
+		PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底
+		//取消对话框置顶
+		PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+
+		ResetEvent(g_hWaitGamma);
 	}
-
-
-	for (int i = 0; i < 256; )
-	{
-		//更改测试G画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(0, i, 0)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = to_string(i);
-		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-		if (i == 0) {
-			i += 3;
-		}
-		else {
-			i += 4;
-		}
-	}
-
-
-	for (int i = 0; i < 256; )
-	{
-		//更改测试R画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(i, 0, 0)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = to_string(i);
-		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-		if (i == 0) {
-			i += 3;
-		}
-		else {
-			i += 4;
-		}
-	}
-
-	outGammaFile.close();
-	//显示完成状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("GammaTest完成"));
-	PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底
-	//取消对话框置顶
-	PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 	return 0;
 }
 
-
 void CRJColorTestDlg::OnBnClickedBtnGammatest()
 {
+	g_hWaitGamma = CreateEvent(NULL, TRUE, TRUE, NULL);//创建一个初始为有信号的事件量
 	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc_Gamma, this, 0, 0);
 }
 
 
 DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 {
-	CRJColorTestDlg* PDLG = (CRJColorTestDlg *)lpParam;
-
-	//显示正在状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("ColorTest进行中..."));
-	PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
-	//设置对话框为顶层窗口
-	PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-	//获取系统时间，作为文件名称
-	time_t timer;
-	time(&timer);
-	string filename = "TestResult\\ColorTest" + to_string(timer) + ".csv";
-	//打开文件
-	ofstream outColorFile;
-	outColorFile.open(filename, ios::out);
-	outColorFile << "Picture" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
-	//在对话框上打测试画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 255)));
-	CRect prect;
-	PDLG->m_picture.GetClientRect(&prect);
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-
-
-	//测试 R 画面	
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 0)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "R";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 G 画面	
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 0)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "G";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 B 画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 255)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "B";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 C 画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 255)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "C";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 M 画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 255)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "M";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 Y 画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 0)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "Y";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//获取对话框上图片控件的句柄
-	CStatic* pWnd = (CStatic*)PDLG->GetDlgItem(IDC_PICTURE);
-	//设置静态控件窗口风格为位图居中显示
-	pWnd->ModifyStyle(0xf, SS_BITMAP | SS_CENTERIMAGE);
-	CString cstr_pictureName;
-	string str_pictureName;
-	for (int i = 1; i <= 24; i++)
+	DWORD dWait = WaitForSingleObject(g_hWaitColor, INFINITE);//无限等待
+	if (WAIT_OBJECT_0 == dWait)
 	{
-		str_Gray = "X-rite_" + to_string(i);
-		str_pictureName = "picture_ColorTest\\" + to_string(i) + ".bmp";
-		cstr_pictureName = CString(str_pictureName.c_str());
-		//显示图片
-		pWnd->SetBitmap((HBITMAP)::LoadImage(NULL, cstr_pictureName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE));
-		PDLG->CA_Measure_SxSyLv();
-		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-	}
 
-	outColorFile.close();
-	//显示完成状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("ColorTest完成"));
-	PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底 
-	//取消对话框置顶
-	PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+		CRJColorTestDlg* PDLG = (CRJColorTestDlg*)lpParam;
+
+		//显示正在状态
+		PDLG->m_isTestOver.SetItemText(0, 0, _T("ColorTest进行中..."));
+		PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
+		//设置对话框为顶层窗口
+		PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+		//获取系统时间，作为文件名称
+		time_t timer;
+		time(&timer);
+		string filename = "TestResult\\ColorTest" + to_string(timer) + ".csv";
+		//打开文件
+		ofstream outColorFile;
+		outColorFile.open(filename, ios::out);
+		outColorFile << "Picture" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
+		//在对话框上打测试画面
+		PDLG->backBrush.DeleteObject();
+		PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 255)));
+		CRect prect;
+		PDLG->m_picture.GetClientRect(&prect);
+		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+
+
+		//测试 R 画面	
+		PDLG->backBrush.DeleteObject();
+		PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 0)));
+		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+		PDLG->CA_Measure_SxSyLv();
+		str_Gray = "R";
+		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+
+
+		//测试 G 画面	
+		PDLG->backBrush.DeleteObject();
+		PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 0)));
+		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+		PDLG->CA_Measure_SxSyLv();
+		str_Gray = "G";
+		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+
+
+		//测试 B 画面
+		PDLG->backBrush.DeleteObject();
+		PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 255)));
+		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+		PDLG->CA_Measure_SxSyLv();
+		str_Gray = "B";
+		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+
+
+		//测试 C 画面
+		PDLG->backBrush.DeleteObject();
+		PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 255)));
+		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+		PDLG->CA_Measure_SxSyLv();
+		str_Gray = "C";
+		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+
+
+		//测试 M 画面
+		PDLG->backBrush.DeleteObject();
+		PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 255)));
+		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+		PDLG->CA_Measure_SxSyLv();
+		str_Gray = "M";
+		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+
+
+		//测试 Y 画面
+		PDLG->backBrush.DeleteObject();
+		PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 0)));
+		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+		PDLG->CA_Measure_SxSyLv();
+		str_Gray = "Y";
+		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+
+
+		//获取对话框上图片控件的句柄
+		CStatic* pWnd = (CStatic*)PDLG->GetDlgItem(IDC_PICTURE);
+		//设置静态控件窗口风格为位图居中显示
+		pWnd->ModifyStyle(0xf, SS_BITMAP | SS_CENTERIMAGE);
+		CString cstr_pictureName;
+		string str_pictureName;
+		for (int i = 1; i <= 24; i++)
+		{
+			str_Gray = "X-rite_" + to_string(i);
+			str_pictureName = "picture_ColorTest\\" + to_string(i) + ".bmp";
+			cstr_pictureName = CString(str_pictureName.c_str());
+			//显示图片
+			pWnd->SetBitmap((HBITMAP)::LoadImage(NULL, cstr_pictureName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE));
+			PDLG->CA_Measure_SxSyLv();
+			outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+		}
+
+		outColorFile.close();
+		//显示完成状态
+		PDLG->m_isTestOver.SetItemText(0, 0, _T("ColorTest完成"));
+		PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底 
+		//取消对话框置顶
+		PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+
+		SetEvent(g_hWaitGamma);//转为有信号状态，其他线程的WaitForSingleObject会返回WAIT_OBJECT_0
+		ResetEvent(g_hWaitColor);
+
+	}
 	return 0;
 }
 
 void CRJColorTestDlg::OnBnClickedBtnColortest()
 {
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc_Color, this, 0, 0);	
+	g_hWaitColor = CreateEvent(NULL, TRUE, TRUE, NULL);//创建一个初始为有信号的事件量
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc_Color, this, 0, 0);
 }
 
 
 DWORD CRJColorTestDlg::ThreadFunc_Contrast(LPVOID lpParam)
 {
-	CRJColorTestDlg* PDLG = (CRJColorTestDlg*)lpParam;
+	SetEvent(g_hWaitContrast);
+	DWORD dWait = WaitForSingleObject(g_hWaitContrast, INFINITE);//无限等待
+	if (WAIT_OBJECT_0 == dWait)
+	{
 
-	//显示正在状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("ContrastTest进行中..."));
-	PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
-	//设置对话框为顶层窗口
-	PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-	//获取系统时间，作为文件名称	
-	time_t timer;
-	time(&timer);
-	string filename = "TestResult\\ContrastTest" + to_string(timer) + ".csv";
-	//打开文件
-	ofstream outContrastFile;
-	outContrastFile.open(filename, ios::out);
-	outContrastFile << "Gray" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
+		CRJColorTestDlg* PDLG = (CRJColorTestDlg*)lpParam;
 
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 255)));
-	CRect prect;
-	PDLG->m_picture.GetClientRect(&prect);
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "White";
-	outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+		//显示正在状态
+		PDLG->m_isTestOver.SetItemText(0, 0, _T("ContrastTest进行中..."));
+		PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
+		//设置对话框为顶层窗口
+		PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+		//获取系统时间，作为文件名称	
+		time_t timer;
+		time(&timer);
+		string filename = "TestResult\\ContrastTest" + to_string(timer) + ".csv";
+		//打开文件
+		ofstream outContrastFile;
+		outContrastFile.open(filename, ios::out);
+		outContrastFile << "Gray" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
+
+		PDLG->backBrush.DeleteObject();
+		PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 255)));
+		CRect prect;
+		PDLG->m_picture.GetClientRect(&prect);
+		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+		PDLG->CA_Measure_SxSyLv();
+		str_Gray = "White";
+		outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
 
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 0)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "Black";
-	outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+		PDLG->backBrush.DeleteObject();
+		PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 0)));
+		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
+		PDLG->CA_Measure_SxSyLv();
+		str_Gray = "Black";
+		outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 
-	outContrastFile.close();
-	//显示完成状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("ContrastTest完成"));
-	PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底
-	//取消对话框置顶
-	PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+		outContrastFile.close();
+		//显示完成状态
+		PDLG->m_isTestOver.SetItemText(0, 0, _T("ContrastTest完成"));
+		PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底
+		//取消对话框置顶
+		PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+
+		SetEvent(g_hWaitColor);//转为有信号状态，其他线程的WaitForSingleObject会返回WAIT_OBJECT_0
+		ResetEvent(g_hWaitContrast);
+	}
 	return 0;
 }
-
 
 void CRJColorTestDlg::OnBnClickedBtnContrasttest()
-{	
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc_Contrast, this, 0, 0);
-
-}
-
-
-DWORD CRJColorTestDlg::ThreadFunc_AllTest(LPVOID lpParam)
 {
-	CRJColorTestDlg* PDLG = (CRJColorTestDlg*)lpParam;
-	//显示正在状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("全套Test进行中..."));
-	PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
-	//设置对话框为顶层窗口
-	PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-
-
-
-	//开始测试Gamma
-	Sleep(1000);
-	//显示正在状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("GammaTest进行中..."));
-	PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
-
-	//获取系统时间，作为文件名称	
-	time_t timer;
-	time(&timer);
-	string filename = "TestResult\\GammaTest" + to_string(timer) + ".csv";
-	//打开文件
-	ofstream outGammaFile;
-	outGammaFile.open(filename, ios::out);
-	outGammaFile << "Gray" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
-
-	//在对话框上打测试画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 0)));
-	CRect prect;
-	PDLG->m_picture.GetClientRect(&prect);
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-
-	for (int i = 0; i < 256; )
-	{		
-		//更改测试W画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(i, i, i)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = to_string(i);
-		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-		if (i == 0) {
-			i += 3;
-		}
-		else {
-			i += 4;
-		}
-	}
-
-
-	for (int i = 0; i < 256; )
-	{
-		//更改测试B画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(0, 0, i)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = to_string(i);
-		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-		if (i == 0) {
-			i += 3;
-		}
-		else {
-			i += 4;
-		}
-	}
-
-
-	for (int i = 0; i < 256; )
-	{
-		//更改测试G画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(0, i, 0)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = to_string(i);
-		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-		if (i == 0) {
-			i += 3;
-		}
-		else {
-			i += 4;
-		}
-	}
-
-
-	for (int i = 0; i < 256; )
-	{
-		//更改测试R画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(i, 0, 0)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = to_string(i);
-		outGammaFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-		if (i == 0) {
-			i += 3;
-		}
-		else {
-			i += 4;
-		}
-	}
-
-
-	outGammaFile.close();
-	//显示完成状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("GammaTest完成"));
-	PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底
-
-
-
-	//开始测试Color
-	Sleep(1000);
-	//显示正在状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("ColorTest进行中..."));
-	PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
-	//设置对话框为顶层窗口
-	PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-	//获取系统时间，作为文件名称
-
-	time(&timer);
-	filename = "TestResult\\ColorTest" + to_string(timer) + ".csv";
-	//打开文件
-	ofstream outColorFile;
-	outColorFile.open(filename, ios::out);
-	outColorFile << "Picture" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
-	//在对话框上打测试画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 255)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-
-
-	//测试 R 画面	
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 0)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "R";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 G 画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 0)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "G";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 B 画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 255)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "B";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 C 画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 255)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "C";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 M 画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 255)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "M";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//测试 Y 画面
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 0)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "Y";
-	outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	//获取对话框上图片控件的句柄
-	CStatic* pWnd = (CStatic*)PDLG->GetDlgItem(IDC_PICTURE);
-	//设置静态控件窗口风格为位图居中显示
-	pWnd->ModifyStyle(0xf, SS_BITMAP | SS_CENTERIMAGE);
-	CString cstr_pictureName;
-	string str_pictureName;
-	for (int i = 1; i <= 24; i++)
-	{
-		str_Gray = "X-rite_" + to_string(i);
-		str_pictureName = "picture_ColorTest\\" + to_string(i) + ".bmp";
-		cstr_pictureName = CString(str_pictureName.c_str());
-		//显示图片
-		pWnd->SetBitmap((HBITMAP)::LoadImage(NULL, cstr_pictureName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE));
-		PDLG->CA_Measure_SxSyLv();
-		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-	}
-
-	outColorFile.close();
-	//显示完成状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("ColorTest完成"));
-	PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底 
-
-
-
-
-	//开始测试Contrast
-	Sleep(1000);
-	//显示正在状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("ContrastTest进行中..."));
-	PDLG->m_isTestOver.SetItemData(0, 2);  //设置红底
-	//设置对话框为顶层窗口
-	PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-	//获取系统时间，作为文件名称	
-
-	time(&timer);
-	filename = "TestResult\\ContrastTest" + to_string(timer) + ".csv";
-	//打开文件
-	ofstream outContrastFile;
-	outContrastFile.open(filename, ios::out);
-	outContrastFile << "Gray" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
-
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 255)));
-
-
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "White";
-	outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-	PDLG->backBrush.DeleteObject();
-	PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 0)));
-	FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-	PDLG->CA_Measure_SxSyLv();
-	str_Gray = "Black";
-	outContrastFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-	outContrastFile.close();
-	//显示完成状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("ContrastTest完成"));
-	PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底
-
-
-	Sleep(1000);
-	//显示完成状态
-	PDLG->m_isTestOver.SetItemText(0, 0, _T("全套Test完成"));
-	PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底
-	//取消对话框置顶
-	PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-	return 0;
+	g_hWaitContrast = CreateEvent(NULL, TRUE, TRUE, NULL);//创建一个初始为有信号的事件量
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc_Contrast, this, 0, 0);
 }
 
 
 void CRJColorTestDlg::OnBnClickedBtnAlltest()
 {
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc_AllTest, this, 0, 0);
-
-	//OnBnClickedBtnGammatest();
-	//Sleep(1000);
-	//OnBnClickedBtnColortest();
-	//Sleep(1000);
-	//OnBnClickedBtnContrasttest();
+	g_hWaitContrast = CreateEvent(NULL, TRUE, FALSE, NULL);//创建一个手动复位、初始为无信号的事件
+	g_hWaitColor = CreateEvent(NULL, TRUE, FALSE, NULL);//创建一个手动复位、初始为无信号的事件
+	g_hWaitGamma = CreateEvent(NULL, TRUE, FALSE, NULL);//创建一个手动复位、初始为无信号的事件
+	DWORD ThreadID_Contrast, ThreadID_Color, ThreadID_Gamma;
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc_Contrast, this, 0, &ThreadID_Contrast);
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc_Color, this, 0, &ThreadID_Color);
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ThreadFunc_Gamma, this, 0, &ThreadID_Gamma);
 }
-
 
 
 void CRJColorTestDlg::OnBnClickedBtnUsertest()
@@ -823,10 +567,9 @@ void CRJColorTestDlg::OnBnClickedBtnUsertest()
 		outUserTestFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
 	}
 	
-	Sleep(500);
+	Sleep(500);//等待500ms
 	SetDlgItemText(IDC_EDIT_PictureName, _T("请填写画面名称"));	
 }
-
 
 
 void CRJColorTestDlg::OnBnClickedCheckIssavedata()
@@ -847,7 +590,6 @@ void CRJColorTestDlg::OnBnClickedCheckIssavedata()
 		outUserTestFile.close();
 	}
 }
-
 
 
 void CRJColorTestDlg::OnBnClickedBtnConnectca()
@@ -944,7 +686,6 @@ void CRJColorTestDlg::OnBnClickedBtnConnectca()
 void CRJColorTestDlg::OnNMCustomdrawListOpenca(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	LPNMTVCUSTOMDRAW pNMCD = reinterpret_cast<LPNMTVCUSTOMDRAW>(pNMHDR);
-	// TODO: 在此添加控件通知处理程序代码
 	NMCUSTOMDRAW nmCustomDraw = pNMCD->nmcd;
 	switch (nmCustomDraw.dwDrawStage)
 	{
@@ -983,7 +724,6 @@ void CRJColorTestDlg::OnNMCustomdrawListOpenca(NMHDR* pNMHDR, LRESULT* pResult)
 void CRJColorTestDlg::OnNMCustomdrawListTestresult(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	LPNMTVCUSTOMDRAW pNMCD = reinterpret_cast<LPNMTVCUSTOMDRAW>(pNMHDR);
-	// TODO: 在此添加控件通知处理程序代码
 	NMCUSTOMDRAW nmCustomDraw = pNMCD->nmcd;
 	switch (nmCustomDraw.dwDrawStage)
 	{
@@ -1021,11 +761,8 @@ void CRJColorTestDlg::OnNMCustomdrawListTestresult(NMHDR* pNMHDR, LRESULT* pResu
 
 void CRJColorTestDlg::CA_Measure_SxSyLv()
 {
-	Sleep(steptime);
-	// CA-SDK  测量
-	float fLv;
-	float fx;
-	float fy;
+	Sleep(steptime); //等待时间
+	float fLv, fx, fy;
 	long lT;
 	//float fduv;
 	for (int i = 0; i < 4; i++) {
@@ -1057,7 +794,6 @@ void CRJColorTestDlg::CA_Measure_SxSyLv()
 
 void CRJColorTestDlg::OnCbnSelchangeCombosteptime()
 {
-	// TODO: 在此添加控件通知处理程序代码
 	int curSel_steptime = vCombo_steptime.GetCurSel();
 	CString curStr_steptime;
 	vCombo_steptime.GetLBText(curSel_steptime, curStr_steptime);
@@ -1076,7 +812,6 @@ void CRJColorTestDlg::OnBnClickedOk()
 	
 	CDialog::OnOK();
 }
-
 
 void CRJColorTestDlg::OnBnClickedCancel()
 {
@@ -1106,4 +841,3 @@ BOOL CRJColorTestDlg::PreTranslateMessage(MSG* pMsg)
 	}
 	return CDialog::PreTranslateMessage(pMsg);
 }
-
