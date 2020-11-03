@@ -64,15 +64,12 @@ public:
 	CString m_Lv;
 	CString m_CCT;
 	void CA_Measure_SxSyLv();    //CA测试函数
+	CString timeChangeFormat();   //系统时间更改成标准时间格式
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedBtnUsertest();
 	afx_msg void OnBnClickedCheckIssavedata();
 	CStatic m_picture;
-
-	//void OnTimer(UINT_PTR nIDEvent);
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
-
 	static DWORD __stdcall ThreadFunc_Gamma(LPVOID lpParam);
 	static DWORD __stdcall ThreadFunc_Color(LPVOID lpParam);
 	static DWORD __stdcall ThreadFunc_Contrast(LPVOID lpParam);

@@ -31,7 +31,6 @@ ofstream outUserTestFile;
 int steptime;
 HANDLE g_hWaitContrast, g_hWaitColor, g_hWaitGamma;
 
-
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
 class CAboutDlg : public CDialog
@@ -241,13 +240,15 @@ void CRJColorTestDlg::OnBnClickedBtnFindcenter()
 	cstr_pictureName = CString(str_pictureName.c_str());
 	//显示图片
 	pWnd->SetBitmap((HBITMAP)::LoadImage(NULL, cstr_pictureName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE));
+
+	//CString strerr = timeChangeFormat();
+	//AfxMessageBox(_T("aaaaa"));
 }
 
 
 DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 {
 	DWORD dWait = WaitForSingleObject(g_hWaitGamma, INFINITE);//无限等待
-
 	if (WAIT_OBJECT_0 == dWait)
 	{
 		CRJColorTestDlg* PDLG = (CRJColorTestDlg*)lpParam;
@@ -257,9 +258,8 @@ DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 		//设置对话框为顶层窗口
 		PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 		//获取系统时间，作为文件名称	
-		time_t timer;
-		time(&timer);
-		string filename = "TestResult\\GammaTest" + to_string(timer) + ".csv";
+		CString timer = PDLG->timeChangeFormat();
+		string filename = "TestResult\\" + CStringA(timer) + "-GammaTest.csv";
 		//打开文件
 		ofstream outGammaFile;
 		outGammaFile.open(filename, ios::out);
@@ -289,7 +289,6 @@ DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 			}
 		}
 
-
 		for (int i = 0; i < 256; )
 		{
 			//更改测试B画面
@@ -307,7 +306,6 @@ DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 			}
 		}
 
-
 		for (int i = 0; i < 256; )
 		{
 			//更改测试G画面
@@ -324,7 +322,6 @@ DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 				i += 4;
 			}
 		}
-
 
 		for (int i = 0; i < 256; )
 		{
@@ -349,8 +346,6 @@ DWORD CRJColorTestDlg::ThreadFunc_Gamma(LPVOID lpParam)
 		PDLG->m_isTestOver.SetItemData(0, 1);  //设置绿底
 		//取消对话框置顶
 		PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
-
-		ResetEvent(g_hWaitGamma);
 	}
 	return 0;
 }
@@ -376,9 +371,8 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 		//设置对话框为顶层窗口
 		PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 		//获取系统时间，作为文件名称
-		time_t timer;
-		time(&timer);
-		string filename = "TestResult\\ColorTest" + to_string(timer) + ".csv";
+		CString timer = PDLG->timeChangeFormat();
+		string filename = "TestResult\\" + CStringA(timer) + "-ColorTest.csv";
 		//打开文件
 		ofstream outColorFile;
 		outColorFile.open(filename, ios::out);
@@ -470,8 +464,6 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 		PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
 		SetEvent(g_hWaitGamma);//转为有信号状态，其他线程的WaitForSingleObject会返回WAIT_OBJECT_0
-		ResetEvent(g_hWaitColor);
-
 	}
 	return 0;
 }
@@ -498,9 +490,8 @@ DWORD CRJColorTestDlg::ThreadFunc_Contrast(LPVOID lpParam)
 		//设置对话框为顶层窗口
 		PDLG->SetWindowPos(&wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 		//获取系统时间，作为文件名称	
-		time_t timer;
-		time(&timer);
-		string filename = "TestResult\\ContrastTest" + to_string(timer) + ".csv";
+		CString timer = PDLG->timeChangeFormat();
+		string filename = "TestResult\\" + CStringA(timer) + "-ContrastTest.csv";
 		//打开文件
 		ofstream outContrastFile;
 		outContrastFile.open(filename, ios::out);
@@ -531,7 +522,6 @@ DWORD CRJColorTestDlg::ThreadFunc_Contrast(LPVOID lpParam)
 		PDLG->SetWindowPos(&wndNoTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
 		SetEvent(g_hWaitColor);//转为有信号状态，其他线程的WaitForSingleObject会返回WAIT_OBJECT_0
-		ResetEvent(g_hWaitContrast);
 	}
 	return 0;
 }
@@ -578,9 +568,8 @@ void CRJColorTestDlg::OnBnClickedCheckIssavedata()
 	if (state == 1)
 	{
 		//获取系统时间，作为文件名称	
-		time_t timer;
-		time(&timer);
-		string filename = "TestResult\\UserTest" + to_string(timer) + ".csv";
+		CString timer = timeChangeFormat();
+		string filename = "TestResult\\" + CStringA(timer) + "-UserTest.csv";
 		//打开自定义测试的保存文件	
 		outUserTestFile.open(filename, ios::app);
 		outUserTestFile << "Picture" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
@@ -792,6 +781,20 @@ void CRJColorTestDlg::CA_Measure_SxSyLv()
 }
 
 
+CString CRJColorTestDlg::timeChangeFormat()
+{
+	time_t rawtime;
+	struct tm timeinfo;
+	char s[100];
+	time(&rawtime);
+	localtime_s(&timeinfo, &rawtime);
+	strftime(s, sizeof(s), "%Y%m%d-%H-%M-%S", &timeinfo);
+
+	string strTime = s;
+	CString strerr(strTime.c_str());
+	return strerr;
+}
+
 void CRJColorTestDlg::OnCbnSelchangeCombosteptime()
 {
 	int curSel_steptime = vCombo_steptime.GetCurSel();
@@ -799,6 +802,7 @@ void CRJColorTestDlg::OnCbnSelchangeCombosteptime()
 	vCombo_steptime.GetLBText(curSel_steptime, curStr_steptime);
 	steptime = _ttoi(curStr_steptime);
 }
+
 
 void CRJColorTestDlg::OnBnClickedOk()
 {
