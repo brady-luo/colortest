@@ -10,7 +10,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
 #include<time.h>  
 
 
@@ -377,6 +376,7 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 		ofstream outColorFile;
 		outColorFile.open(filename, ios::out);
 		outColorFile << "Picture" << ',' << "fx" << ',' << "fy" << ',' << "Lv" << ',' << "CCT" << endl;
+
 		//在对话框上打测试画面
 		PDLG->backBrush.DeleteObject();
 		PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 255)));
@@ -385,75 +385,36 @@ DWORD CRJColorTestDlg::ThreadFunc_Color(LPVOID lpParam)
 		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
 
 
-		//测试 R 画面	
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 0)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = "R";
-		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+		CString strline;
+		CString strRvalue, strGvalue, strBvalue;
+		CStdioFile file;
+		int Rvalue, Gvalue, Bvalue;
 
+		BOOL flag = file.Open(_T("colorValue1.txt"), CFile::modeRead);
+		if (flag == FALSE) {
+			AfxMessageBox(_T("颜色值文件打开失败！"));
+			return 0;
+		}
+		while (file.ReadString(strline)) {
+			if (strline.GetLength() != 13) {
+				AfxMessageBox(_T("颜色值文件内容不正确！"));
+				return 0;
+			}
+			strRvalue = (CString)strline[2] + (CString)strline[3] + (CString)strline[4];
+			Rvalue = _ttoi(strRvalue);
+			strGvalue = (CString)strline[6] + (CString)strline[7] + (CString)strline[8];
+			Gvalue = _ttoi(strGvalue);
+			strBvalue = (CString)strline[10] + (CString)strline[11] + (CString)strline[12];
+			Bvalue = _ttoi(strBvalue);
 
-		//测试 G 画面	
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 0)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = "G";
-		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-		//测试 B 画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(0, 0, 255)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = "B";
-		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-		//测试 C 画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(0, 255, 255)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = "C";
-		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-		//测试 M 画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(255, 0, 255)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = "M";
-		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-		//测试 Y 画面
-		PDLG->backBrush.DeleteObject();
-		PDLG->backBrush.CreateSolidBrush((RGB(255, 255, 0)));
-		FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
-		PDLG->CA_Measure_SxSyLv();
-		str_Gray = "Y";
-		outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
-
-
-		//获取对话框上图片控件的句柄
-		CStatic* pWnd = (CStatic*)PDLG->GetDlgItem(IDC_PICTURE);
-		//设置静态控件窗口风格为位图居中显示
-		pWnd->ModifyStyle(0xf, SS_BITMAP | SS_CENTERIMAGE);
-		CString cstr_pictureName;
-		string str_pictureName;
-		for (int i = 1; i <= 24; i++)
-		{
-			str_Gray = "X-rite_" + to_string(i);
-			str_pictureName = "picture_ColorTest\\" + to_string(i) + ".bmp";
-			cstr_pictureName = CString(str_pictureName.c_str());
-			//显示图片
-			pWnd->SetBitmap((HBITMAP)::LoadImage(NULL, cstr_pictureName, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE));
+			//测试 画面	
+			PDLG->backBrush.DeleteObject();
+			PDLG->backBrush.CreateSolidBrush((RGB(Rvalue, Gvalue, Bvalue)));
+			FillRect(PDLG->m_picture.GetDC()->GetSafeHdc(), &prect, PDLG->backBrush);
 			PDLG->CA_Measure_SxSyLv();
+			str_Gray = strline[0];
 			outColorFile << str_Gray << ',' << str_fx << ',' << str_fy << ',' << str_Lv << ',' << str_CCT << endl;
+
 		}
 
 		outColorFile.close();
@@ -604,9 +565,7 @@ void CRJColorTestDlg::OnBnClickedBtnConnectca()
 		*/
 	}
 	catch (_com_error e) {
-		CString strerr;
-		strerr.Format(_T("打开CA310失败"));
-		AfxMessageBox(strerr);
+		AfxMessageBox(_T("打开CA310失败!"));
 		//return TRUE;
 	}
 
@@ -639,7 +598,6 @@ void CRJColorTestDlg::OnBnClickedBtnConnectca()
 
 	try {
 		m_pCaObj->CalZero();
-
 		m_isOpencaOK.SetItemText(0, 0, _T("CA310校准成功！"));
 		m_isOpencaOK.SetItemData(0, 1);  //设置绿底
 
@@ -649,15 +607,9 @@ void CRJColorTestDlg::OnBnClickedBtnConnectca()
 		m_isOpencaOK.SetItemText(0, 0, _T("CA310校准失败！"));
 		m_isOpencaOK.SetItemData(0, 2);  //设置红底
 
-		CString strerr;
-		strerr.Format(_T("CA310校准失败！"));
-		AfxMessageBox(strerr);
+		AfxMessageBox(_T("CA310校准失败!"));
 		return;
 	}
-	//CButton* pb;
-	//pb = (CButton*)GetDlgItem(IDC_BTN_ConnectCA); //测试按钮
-	//pb->EnableWindow(FALSE);           //使测试按钮不可以操作
-
 	//测试控件设置为可用
 	HWND hBtn = ::GetDlgItem(m_hWnd, IDC_BTN_GammaTest);
 	::EnableWindow(hBtn, TRUE);
@@ -806,8 +758,7 @@ void CRJColorTestDlg::OnCbnSelchangeCombosteptime()
 
 void CRJColorTestDlg::OnBnClickedOk()
 {
-	if (m_pCaObj != NULL)
-	{
+	if (m_pCaObj != NULL){
 		m_pCaObj->RemoteMode = 0;
 	}
 
@@ -819,8 +770,7 @@ void CRJColorTestDlg::OnBnClickedOk()
 
 void CRJColorTestDlg::OnBnClickedCancel()
 {
-	if (m_pCaObj != NULL)
-	{
+	if (m_pCaObj != NULL){
 		m_pCaObj->RemoteMode = 0;
 	}
 
@@ -832,7 +782,6 @@ void CRJColorTestDlg::OnBnClickedCancel()
 
 BOOL CRJColorTestDlg::PreTranslateMessage(MSG* pMsg)
 {
-	// TODO: Add your specialized code here and/or call the base class
 	if (pMsg->message == WM_KEYDOWN)
 	{
 		switch (pMsg->wParam)
