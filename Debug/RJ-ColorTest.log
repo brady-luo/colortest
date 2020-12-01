@@ -1,7 +1,1 @@
-﻿  RJ-ColorTestDlg.cpp
-C:\Users\Administrator\source\repos\RJ-ColorTest\RJ-ColorTest\RJ-ColorTestDlg.cpp(415,24): warning C4244: “参数”: 从“wchar_t”转换到“const _Elem”，可能丢失数据
-          with
-          [
-              _Elem=char
-          ]
-  RJ-ColorTest.vcxproj -> C:\Users\Administrator\source\repos\RJ-ColorTest\Debug\RJ-ColorTest.exe
+﻿  RJ-ColorTest.vcxproj -> C:\Users\Administrator\source\repos\RJ-ColorTest\Debug\RJ-ColorTest.exe

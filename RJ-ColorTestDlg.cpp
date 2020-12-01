@@ -12,7 +12,6 @@
 #include <string>
 #include<time.h>  
 
-
 // CA-SDK
 #include "Const.h"       
 #include "CaEvent.h"     
